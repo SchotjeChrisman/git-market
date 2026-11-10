@@ -1,0 +1,52 @@
+[
+  {
+    "tag_name": "v17.0.1",
+    "name": "v17.0.1",
+    "prerelease": false,
+    "draft": false,
+    "published_at": "2026-10-26T19:39:32+01:00",
+    "html_url": "https://codeberg.org/forgejo/forgejo/releases/tag/v17.0.1",
+    "assets": [
+      {
+        "name": "forgejo-17.0.1-linux-amd64",
+        "size": 122057320,
+        "browser_download_url": "https://codeberg.org/forgejo/forgejo/releases/download/v17.0.1/forgejo-17.0.1-linux-amd64"
+      },
+      {
+        "name": "forgejo-17.0.1-linux-amd64.asc",
+        "size": 228,
+        "browser_download_url": "https://codeberg.org/forgejo/forgejo/releases/download/v17.0.1/forgejo-17.0.1-linux-amd64.asc"
+      },
+      {
+        "name": "forgejo-17.0.1-linux-amd64.sha256",
+        "size": 93,
+        "browser_download_url": "https://codeberg.org/forgejo/forgejo/releases/download/v17.0.1/forgejo-17.0.1-linux-amd64.sha256"
+      }
+    ]
+  },
+  {
+    "tag_name": "v16.0.7",
+    "name": "v16.0.7",
+    "prerelease": false,
+    "draft": false,
+    "published_at": "2026-10-26T19:36:30+01:00",
+    "html_url": "https://codeberg.org/forgejo/forgejo/releases/tag/v16.0.7",
+    "assets": [
+      {
+        "name": "forgejo-16.0.7-linux-amd64",
+        "size": 122284776,
+        "browser_download_url": "https://codeberg.org/forgejo/forgejo/releases/download/v16.0.7/forgejo-16.0.7-linux-amd64"
+      },
+      {
+        "name": "forgejo-16.0.7-linux-amd64.asc",
+        "size": 228,
+        "browser_download_url": "https://codeberg.org/forgejo/forgejo/releases/download/v16.0.7/forgejo-16.0.7-linux-amd64.asc"
+      },
+      {
+        "name": "forgejo-16.0.7-linux-amd64.sha256",
+        "size": 93,
+        "browser_download_url": "https://codeberg.org/forgejo/forgejo/releases/download/v16.0.7/forgejo-16.0.7-linux-amd64.sha256"
+      }
+    ]
+  }
+]

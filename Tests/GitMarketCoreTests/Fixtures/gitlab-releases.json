@@ -1,0 +1,64 @@
+[
+  {
+    "tag_name": "v1.128.0",
+    "name": "v1.128.0",
+    "upcoming_release": false,
+    "released_at": "2026-11-03T12:18:50.742Z",
+    "_links": {
+      "self": "https://gitlab.com/gitlab-org/cli/-/releases/v1.128.0"
+    },
+    "assets": {
+      "links": [
+        {
+          "name": "glab_1.128.0_Windows_arm64_installer.exe",
+          "url": "https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/packages/generic/glab/1%2E128%2E0/glab_1%2E128%2E0_Windows_arm64_installer%2Eexe",
+          "direct_asset_url": "https://gitlab.com/gitlab-org/cli/-/releases/v1.128.0/downloads/glab_1.128.0_Windows_arm64_installer.exe",
+          "link_type": "other"
+        },
+        {
+          "name": "glab_1.128.0_linux_amd64.deb",
+          "url": "https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/packages/generic/glab/1%2E128%2E0/glab_1%2E128%2E0_linux_amd64%2Edeb",
+          "direct_asset_url": "https://gitlab.com/gitlab-org/cli/-/releases/v1.128.0/downloads/glab_1.128.0_linux_amd64.deb",
+          "link_type": "other"
+        },
+        {
+          "name": "glab_1.128.0_windows_arm64.zip",
+          "url": "https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/packages/generic/glab/1%2E128%2E0/glab_1%2E128%2E0_windows_arm64%2Ezip",
+          "direct_asset_url": "https://gitlab.com/gitlab-org/cli/-/releases/v1.128.0/downloads/glab_1.128.0_windows_arm64.zip",
+          "link_type": "other"
+        }
+      ]
+    }
+  },
+  {
+    "tag_name": "v1.127.0",
+    "name": "v1.127.0",
+    "upcoming_release": false,
+    "released_at": "2026-11-02T12:56:55.029Z",
+    "_links": {
+      "self": "https://gitlab.com/gitlab-org/cli/-/releases/v1.127.0"
+    },
+    "assets": {
+      "links": [
+        {
+          "name": "glab_1.127.0_windows_arm64.zip",
+          "url": "https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/packages/generic/glab/1%2E127%2E0/glab_1%2E127%2E0_windows_arm64%2Ezip",
+          "direct_asset_url": "https://gitlab.com/gitlab-org/cli/-/releases/v1.127.0/downloads/glab_1.127.0_windows_arm64.zip",
+          "link_type": "other"
+        },
+        {
+          "name": "glab_1.127.0_source.tar.gz",
+          "url": "https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/packages/generic/glab/1%2E127%2E0/glab_1%2E127%2E0_source%2Etar%2Egz",
+          "direct_asset_url": "https://gitlab.com/gitlab-org/cli/-/releases/v1.127.0/downloads/glab_1.127.0_source.tar.gz",
+          "link_type": "other"
+        },
+        {
+          "name": "glab_1.127.0_Windows_x86_64_installer.exe",
+          "url": "https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/packages/generic/glab/1%2E127%2E0/glab_1%2E127%2E0_Windows_x86_64_installer%2Eexe",
+          "direct_asset_url": "https://gitlab.com/gitlab-org/cli/-/releases/v1.127.0/downloads/glab_1.127.0_Windows_x86_64_installer.exe",
+          "link_type": "other"
+        }
+      ]
+    }
+  }
+]
