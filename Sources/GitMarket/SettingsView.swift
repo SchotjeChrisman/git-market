@@ -27,7 +27,7 @@ struct SettingsView: View {
     private var tokenSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Access tokens").font(.headline)
-            Text("Optional. They raise rate limits and unlock private repositories. Stored in the macOS Keychain.")
+            Text("Optional. They raise rate limits and let release lists of private repositories load; private downloads are not supported yet. Stored in the macOS Keychain.")
                 .font(.caption).foregroundStyle(.secondary)
             if model.hosts.isEmpty {
                 Text("Add an app first; its host will show up here.").foregroundStyle(.secondary)
