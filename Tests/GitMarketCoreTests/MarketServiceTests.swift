@@ -91,6 +91,28 @@ final class MarketServiceTests: XCTestCase {
         XCTAssertFalse(current.hasUpdate)
     }
 
+    func testRollingTagUpdatesWhenOnlyThePublishDateMoves() async throws {
+        let service = makeService(releases: releaseJSON(tag: "edge", assetName: "Tool.zip", prerelease: true), installDirectory: try makeTemporaryDirectory())
+        var app = TrackedApp(location: try ForgeLocation(parsing: "github.com/owner/tool"), displayName: "Tool", includePrereleases: true)
+        app.installedTag = "edge"
+        app.installedAssetName = "Tool.zip"
+        app.installedPublishedAt = Date(timeIntervalSince1970: 0)
+        let checked = try await service.check(app)
+        XCTAssertTrue(checked.hasUpdate)
+    }
+
+    func testRollingTagUpdatesAnAppInstalledOutsideGitMarket() async throws {
+        let service = makeService(releases: releaseJSON(tag: "edge", assetName: "Tool-dev.92.zip", prerelease: true), installDirectory: try makeTemporaryDirectory())
+        var app = TrackedApp(location: try ForgeLocation(parsing: "github.com/owner/tool"), displayName: "Tool", includePrereleases: true)
+        app.installedTag = "edge"
+        app.installedBundleVersion = "dev.91"
+        let outdated = try await service.check(app)
+        XCTAssertTrue(outdated.hasUpdate)
+        app.installedBundleVersion = "dev.92"
+        let current = try await service.check(app)
+        XCTAssertFalse(current.hasUpdate)
+    }
+
     func testCheckRecordsLatestTagAndTime() async throws {
         let service = makeService(releases: releaseJSON(tag: "v2.0.0", assetName: "Tool.dmg"), installDirectory: try makeTemporaryDirectory())
         var app = TrackedApp(location: try ForgeLocation(parsing: "github.com/owner/tool"), displayName: "Tool")

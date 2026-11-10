@@ -120,6 +120,8 @@ final class AppModel: ObservableObject {
             mutate(id) {
                 $0.installedTag = installed.installedTag
                 $0.installedAssetName = installed.installedAssetName
+                $0.installedPublishedAt = installed.installedPublishedAt
+                $0.latestKnownPublishedAt = installed.latestKnownPublishedAt
                 $0.latestKnownTag = installed.latestKnownTag
                 $0.latestKnownAssetName = installed.latestKnownAssetName
                 $0.installedBundlePath = installed.installedBundlePath
@@ -177,6 +179,8 @@ final class AppModel: ObservableObject {
             mutate(id) {
                 $0.latestKnownTag = checked.latestKnownTag
                 $0.latestKnownAssetName = checked.latestKnownAssetName
+                $0.latestKnownPublishedAt = checked.latestKnownPublishedAt
+                $0.installedBundleVersion = checked.installedBundlePath.flatMap(InstalledBundleVersion.read(atPath:))
                 $0.lastCheckedAt = checked.lastCheckedAt
             }
             activity[id] = nil

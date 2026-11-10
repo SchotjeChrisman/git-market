@@ -62,10 +62,12 @@ public struct MarketService {
             let release = try await latestRelease(of: app.location, includePrereleases: app.includePrereleases)
             checked.latestKnownTag = release.tag
             checked.latestKnownAssetName = try assetName(in: release, namePattern: app.assetNamePattern)
+            checked.latestKnownPublishedAt = release.publishedAt
         } catch MarketError.noReleases {
             // A repository may be tracked before its first release exists.
             checked.latestKnownTag = nil
             checked.latestKnownAssetName = nil
+            checked.latestKnownPublishedAt = nil
         }
         checked.lastCheckedAt = now()
         return checked
@@ -90,6 +92,8 @@ public struct MarketService {
         installed.latestKnownTag = release.tag
         installed.installedAssetName = asset.name
         installed.latestKnownAssetName = asset.name
+        installed.installedPublishedAt = release.publishedAt
+        installed.latestKnownPublishedAt = release.publishedAt
         installed.installedBundlePath = outcome.bundleURL?.path ?? app.installedBundlePath
         installed.installedSignature = outcome.signature ?? app.installedSignature
         installed.lastCheckedAt = now()
