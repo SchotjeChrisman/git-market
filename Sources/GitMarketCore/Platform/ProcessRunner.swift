@@ -32,31 +32,30 @@ public struct ProcessRunner {
         self.run = run
     }
 
+    /// Output goes to temp files, not pipes: `hdiutil attach` leaves a helper running that keeps
+    /// inherited pipes open, so waiting for end-of-output would never finish.
     public static let live = ProcessRunner { command in
+        let capture = try OutputCapture()
+        defer { capture.remove() }
+
         let process = Process()
         process.executableURL = URL(fileURLWithPath: command.executable)
         process.arguments = command.arguments
-        let outputPipe = Pipe()
-        let errorPipe = Pipe()
+        process.standardOutput = capture.outputHandle
+        process.standardError = capture.errorHandle
         let inputPipe = Pipe()
-        process.standardOutput = outputPipe
-        process.standardError = errorPipe
-        process.standardInput = inputPipe
-
-        try process.run()
         if let input = command.standardInput {
             inputPipe.fileHandleForWriting.write(Data(input.utf8))
         }
         try inputPipe.fileHandleForWriting.close()
+        process.standardInput = inputPipe
 
-        async let outputData = readToEnd(outputPipe)
-        async let errorData = readToEnd(errorPipe)
-        let (output, error) = await (outputData, errorData)
-        process.waitUntilExit()
+        try await runUntilExit(process)
+
         return ProcessResult(
             status: process.terminationStatus,
-            standardOutput: String(decoding: output, as: UTF8.self),
-            standardError: String(decoding: error, as: UTF8.self)
+            standardOutput: try capture.readOutput(),
+            standardError: try capture.readError()
         )
     }
 
@@ -73,6 +72,40 @@ public struct ProcessRunner {
     }
 }
 
-private func readToEnd(_ pipe: Pipe) async -> Data {
-    await Task.detached { pipe.fileHandleForReading.readDataToEndOfFile() }.value
+private func runUntilExit(_ process: Process) async throws {
+    try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+        process.terminationHandler = { _ in continuation.resume() }
+        do {
+            try process.run()
+        } catch {
+            continuation.resume(throwing: error)
+        }
+    }
+}
+
+private struct OutputCapture {
+    let outputHandle: FileHandle
+    let errorHandle: FileHandle
+    private let outputURL: URL
+    private let errorURL: URL
+
+    init() throws {
+        let base = FileManager.default.temporaryDirectory.appendingPathComponent("GitMarketProcess-\(UUID().uuidString)")
+        outputURL = base.appendingPathExtension("out")
+        errorURL = base.appendingPathExtension("err")
+        FileManager.default.createFile(atPath: outputURL.path, contents: nil)
+        FileManager.default.createFile(atPath: errorURL.path, contents: nil)
+        outputHandle = try FileHandle(forWritingTo: outputURL)
+        errorHandle = try FileHandle(forWritingTo: errorURL)
+    }
+
+    func readOutput() throws -> String { String(decoding: try Data(contentsOf: outputURL), as: UTF8.self) }
+    func readError() throws -> String { String(decoding: try Data(contentsOf: errorURL), as: UTF8.self) }
+
+    func remove() {
+        try? outputHandle.close()
+        try? errorHandle.close()
+        try? FileManager.default.removeItem(at: outputURL)
+        try? FileManager.default.removeItem(at: errorURL)
+    }
 }
