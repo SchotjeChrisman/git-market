@@ -75,7 +75,8 @@ final class MarketServiceTests: XCTestCase {
     func testCheckMakesAnUninstalledAppInstallableOnceAReleaseAppears() async throws {
         let service = makeService(releases: releaseJSON(tag: "v1", assetName: "Tool.dmg"), installDirectory: try makeTemporaryDirectory())
         let app = TrackedApp(location: try ForgeLocation(parsing: "github.com/owner/tool"), displayName: "Tool")
-        XCTAssertTrue(try await service.check(app).isInstallable)
+        let checked = try await service.check(app)
+        XCTAssertTrue(checked.isInstallable)
     }
 
     func testCheckRecordsLatestTagAndTime() async throws {
