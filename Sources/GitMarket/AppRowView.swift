@@ -36,6 +36,7 @@ struct AppRowView: View {
             guard let latest = app.latestKnownTag else { return "Not installed, no release yet" }
             return "Not installed, \(latest) available"
         }
+        if app.hasNewBuildUnderSameTag { return "\(installed), new build available" }
         if app.hasUpdate, let latest = app.latestKnownTag { return "\(installed) → \(latest)" }
         return "Installed \(installed)"
     }

@@ -59,10 +59,13 @@ public struct MarketService {
     public func check(_ app: TrackedApp) async throws -> TrackedApp {
         var checked = app
         do {
-            checked.latestKnownTag = try await latestRelease(of: app.location, includePrereleases: app.includePrereleases).tag
+            let release = try await latestRelease(of: app.location, includePrereleases: app.includePrereleases)
+            checked.latestKnownTag = release.tag
+            checked.latestKnownAssetName = try assetName(in: release, namePattern: app.assetNamePattern)
         } catch MarketError.noReleases {
             // A repository may be tracked before its first release exists.
             checked.latestKnownTag = nil
+            checked.latestKnownAssetName = nil
         }
         checked.lastCheckedAt = now()
         return checked
@@ -85,6 +88,8 @@ public struct MarketService {
         var installed = app
         installed.installedTag = release.tag
         installed.latestKnownTag = release.tag
+        installed.installedAssetName = asset.name
+        installed.latestKnownAssetName = asset.name
         installed.installedBundlePath = outcome.bundleURL?.path ?? app.installedBundlePath
         installed.installedSignature = outcome.signature ?? app.installedSignature
         installed.lastCheckedAt = now()
@@ -97,6 +102,15 @@ public struct MarketService {
             throw MarketError.noReleases
         }
         return release
+    }
+
+    /// Nil when the release has no installable file; the install reports that when attempted.
+    private func assetName(in release: Release, namePattern: String?) throws -> String? {
+        do {
+            return try selectAsset(from: release, namePattern: namePattern).name
+        } catch MarketError.noInstallableAsset {
+            return nil
+        }
     }
 
     private func selectAsset(from release: Release, namePattern: String?) throws -> Asset {

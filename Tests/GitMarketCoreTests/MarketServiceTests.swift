@@ -79,6 +79,18 @@ final class MarketServiceTests: XCTestCase {
         XCTAssertTrue(checked.isInstallable)
     }
 
+    func testRollingTagUpdatesWhenTheAssetNameChanges() async throws {
+        let service = makeService(releases: releaseJSON(tag: "edge", assetName: "Tool-dev.89.zip", prerelease: true), installDirectory: try makeTemporaryDirectory())
+        var app = TrackedApp(location: try ForgeLocation(parsing: "github.com/owner/tool"), displayName: "Tool", includePrereleases: true)
+        app.installedTag = "edge"
+        app.installedAssetName = "Tool-dev.88.zip"
+        let checked = try await service.check(app)
+        XCTAssertTrue(checked.hasUpdate)
+        app.installedAssetName = "Tool-dev.89.zip"
+        let current = try await service.check(app)
+        XCTAssertFalse(current.hasUpdate)
+    }
+
     func testCheckRecordsLatestTagAndTime() async throws {
         let service = makeService(releases: releaseJSON(tag: "v2.0.0", assetName: "Tool.dmg"), installDirectory: try makeTemporaryDirectory())
         var app = TrackedApp(location: try ForgeLocation(parsing: "github.com/owner/tool"), displayName: "Tool")
