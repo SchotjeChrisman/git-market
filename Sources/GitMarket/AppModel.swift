@@ -20,6 +20,8 @@ final class AppModel: ObservableObject {
     private static let defaultIntervalHours = 6
     private static let secondsPerHour: TimeInterval = 3600
     private static let applicationsDirectory = URL(fileURLWithPath: "/Applications")
+    private static let ownRepositoryURL = "https://github.com/SchotjeChrisman/git-market"
+    private static let relaunchDelaySeconds = 2
     private static let schedulerIdentifier = "\(AppIdentity.bundleIdentifier).check"
 
     @Published private(set) var apps: [TrackedApp] = []
@@ -45,6 +47,7 @@ final class AppModel: ObservableObject {
         } catch {
             errorMessage = "Could not read the app list: \(ErrorDescription.text(for: error))"
         }
+        trackItself()
         scheduleChecks()
         requestNotificationPermission()
         Task { await checkAll() }
@@ -116,17 +119,53 @@ final class AppModel: ObservableObject {
             let installed = try await service.install(app, allowSigningTeamChange: allowSigningTeamChange)
             mutate(id) {
                 $0.installedTag = installed.installedTag
+                $0.installedAssetName = installed.installedAssetName
                 $0.latestKnownTag = installed.latestKnownTag
+                $0.latestKnownAssetName = installed.latestKnownAssetName
                 $0.installedBundlePath = installed.installedBundlePath
                 $0.installedSignature = installed.installedSignature
                 $0.lastCheckedAt = installed.lastCheckedAt
             }
             activity[id] = nil
+            if isItself(app), let path = installed.installedBundlePath { relaunch(bundlePath: path) }
         } catch InstallError.signingTeamChanged(let previousTeam, let newSignature) {
             activity[id] = nil
             teamChangePrompt = TeamChangePrompt(appID: id, message: Self.teamChangeMessage(app.displayName, previousTeam, newSignature))
         } catch {
             activity[id] = .failed(ErrorDescription.text(for: error))
+        }
+    }
+
+    /// Git Market updates itself like any other tracked app. Skipped when run outside a .app bundle (swift run).
+    private func trackItself() {
+        guard Bundle.main.bundleURL.pathExtension == "app",
+              let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String else { return }
+        do {
+            let location = try ForgeLocation(parsing: Self.ownRepositoryURL)
+            guard !apps.contains(where: { $0.location == location }) else { return }
+            var app = TrackedApp(location: location, displayName: AppIdentity.displayName)
+            app.installedTag = "v\(version)"
+            app.installedBundlePath = Bundle.main.bundlePath
+            apps.append(app)
+            persist()
+        } catch {
+            errorMessage = "Could not track Git Market itself: \(ErrorDescription.text(for: error))"
+        }
+    }
+
+    private func isItself(_ app: TrackedApp) -> Bool {
+        app.location.host == "github.com" && app.location.pathComponents == ["SchotjeChrisman", "git-market"]
+    }
+
+    private func relaunch(bundlePath: String) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        process.arguments = ["-c", "sleep \(Self.relaunchDelaySeconds); /usr/bin/open \"$0\"", bundlePath]
+        do {
+            try process.run()
+            NSApplication.shared.terminate(nil)
+        } catch {
+            errorMessage = "Updated, but could not restart: \(ErrorDescription.text(for: error))"
         }
     }
 
@@ -137,6 +176,7 @@ final class AppModel: ObservableObject {
             let checked = try await service.check(app)
             mutate(id) {
                 $0.latestKnownTag = checked.latestKnownTag
+                $0.latestKnownAssetName = checked.latestKnownAssetName
                 $0.lastCheckedAt = checked.lastCheckedAt
             }
             activity[id] = nil
