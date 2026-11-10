@@ -6,7 +6,9 @@ struct AddAppSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var repositoryText = ""
+    @State private var includePrereleases = false
     @State private var forgeKind: ForgeKind?
+    @State private var releaseLessLocation: ForgeLocation?
     @State private var needsForgeKind = false
     @State private var isLookingUp = false
     @State private var preview: ReleasePreview?
@@ -19,6 +21,8 @@ struct AddAppSheet: View {
                 .textFieldStyle(.roundedBorder)
                 .onSubmit(lookUp)
                 .onChange(of: repositoryText) { _ in resetResult() }
+            Toggle("Include pre-releases", isOn: $includePrereleases)
+                .onChange(of: includePrereleases) { _ in resetResult() }
             if needsForgeKind { forgePicker }
             if isLookingUp { ProgressView().controlSize(.small) }
             if let errorText { Text(errorText).foregroundStyle(.red).font(.callout) }
@@ -55,11 +59,17 @@ struct AddAppSheet: View {
             Button("Cancel", role: .cancel) { dismiss() }
             if let preview {
                 Button("Install") {
-                    model.addAndInstall(preview)
+                    model.addAndInstall(preview, includePrereleases: includePrereleases)
                     dismiss()
                 }
                 .buttonStyle(.borderedProminent)
             } else {
+                if let releaseLessLocation {
+                    Button("Add Without Installing") {
+                        model.addWithoutInstalling(releaseLessLocation, includePrereleases: includePrereleases)
+                        dismiss()
+                    }
+                }
                 Button("Look Up", action: lookUp)
                     .disabled(repositoryText.isEmpty || isLookingUp)
                     .keyboardShortcut(.defaultAction)
@@ -69,6 +79,7 @@ struct AddAppSheet: View {
 
     private func resetResult() {
         preview = nil
+        releaseLessLocation = nil
         errorText = nil
     }
 
@@ -78,7 +89,13 @@ struct AddAppSheet: View {
         errorText = nil
         Task {
             do {
-                preview = try await model.preview(repositoryText, kind: forgeKind)
+                let location = try await model.locate(repositoryText, kind: forgeKind)
+                do {
+                    preview = try await model.preview(repositoryText, kind: forgeKind, includePrereleases: includePrereleases)
+                } catch let error as MarketError {
+                    releaseLessLocation = location
+                    throw error
+                }
             } catch {
                 if case ForgeError.unknownForge = error { needsForgeKind = true }
                 errorText = ErrorDescription.text(for: error)

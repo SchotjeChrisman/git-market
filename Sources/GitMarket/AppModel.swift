@@ -50,19 +50,34 @@ final class AppModel: ObservableObject {
         Task { await checkAll() }
     }
 
-    var updateCount: Int { apps.filter(\.hasUpdate).count }
+    var updateCount: Int { apps.filter { $0.hasUpdate || $0.isInstallable }.count }
     var hosts: [String] { Array(Set(apps.map(\.location.host))).sorted() }
 
-    func preview(_ repositoryText: String, kind: ForgeKind?) async throws -> ReleasePreview {
-        try await service.preview(repositoryText: repositoryText, kind: kind)
+    func locate(_ repositoryText: String, kind: ForgeKind?) async throws -> ForgeLocation {
+        try await service.locate(repositoryText: repositoryText, kind: kind)
     }
 
-    func addAndInstall(_ preview: ReleasePreview) {
-        let name = preview.location.pathComponents.last ?? preview.location.displayName
-        let app = TrackedApp(location: preview.location, displayName: name)
+    func preview(_ repositoryText: String, kind: ForgeKind?, includePrereleases: Bool) async throws -> ReleasePreview {
+        try await service.preview(repositoryText: repositoryText, kind: kind, includePrereleases: includePrereleases)
+    }
+
+    func addAndInstall(_ preview: ReleasePreview, includePrereleases: Bool) {
+        let id = track(preview.location, includePrereleases: includePrereleases)
+        Task { await install(id) }
+    }
+
+    /// Tracks a repository that has no installable release yet; the next check offers the install.
+    func addWithoutInstalling(_ location: ForgeLocation, includePrereleases: Bool) {
+        let id = track(location, includePrereleases: includePrereleases)
+        Task { await check(id) }
+    }
+
+    private func track(_ location: ForgeLocation, includePrereleases: Bool) -> UUID {
+        let name = location.pathComponents.last ?? location.displayName
+        let app = TrackedApp(location: location, displayName: name, includePrereleases: includePrereleases)
         apps.append(app)
         persist()
-        Task { await install(app.id) }
+        return app.id
     }
 
     func remove(_ id: UUID) {
@@ -79,7 +94,7 @@ final class AppModel: ObservableObject {
     }
 
     func checkAll() async {
-        let alreadyUpdatable = Set(apps.filter(\.hasUpdate).map(\.id))
+        let alreadyUpdatable = Set(apps.filter { $0.hasUpdate || $0.isInstallable }.map(\.id))
         await withTaskGroup(of: Void.self) { group in
             for app in apps {
                 group.addTask { await self.check(app.id) }
@@ -175,7 +190,7 @@ final class AppModel: ObservableObject {
     }
 
     private func notifyAboutNewUpdates(excluding alreadyUpdatable: Set<UUID>) {
-        let fresh = apps.filter { $0.hasUpdate && !alreadyUpdatable.contains($0.id) }
+        let fresh = apps.filter { ($0.hasUpdate || $0.isInstallable) && !alreadyUpdatable.contains($0.id) }
         guard !fresh.isEmpty else { return }
         let content = UNMutableNotificationContent()
         content.title = "Updates available"

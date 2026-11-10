@@ -11,9 +11,9 @@ final class MarketServiceTests: XCTestCase {
         }
     }
 
-    private func releaseJSON(tag: String, assetName: String) -> String {
+    private func releaseJSON(tag: String, assetName: String, prerelease: Bool = false) -> String {
         """
-        [{"tag_name":"\(tag)","name":null,"prerelease":false,"draft":false,
+        [{"tag_name":"\(tag)","name":null,"prerelease":\(prerelease),"draft":false,
           "published_at":"2026-11-01T00:00:00Z","html_url":null,
           "assets":[{"name":"\(assetName)","size":1,"browser_download_url":"https://example.com/\(assetName)"}]}]
         """
@@ -50,6 +50,32 @@ final class MarketServiceTests: XCTestCase {
         } catch {
             XCTAssertEqual(error as? MarketError, .noInstallableAsset(tag: "v1"))
         }
+    }
+
+    func testPreviewFindsPrereleaseOnlyWhenAsked() async throws {
+        let service = makeService(releases: releaseJSON(tag: "edge", assetName: "Tool.zip", prerelease: true), installDirectory: try makeTemporaryDirectory())
+        do {
+            _ = try await service.preview(repositoryText: "github.com/owner/tool")
+            XCTFail("expected an error")
+        } catch {
+            XCTAssertEqual(error as? MarketError, .noReleases)
+        }
+        let preview = try await service.preview(repositoryText: "github.com/owner/tool", includePrereleases: true)
+        XCTAssertEqual(preview.release.tag, "edge")
+    }
+
+    func testCheckWithoutAnyReleaseClearsTheLatestTag() async throws {
+        let service = makeService(releases: "[]", installDirectory: try makeTemporaryDirectory())
+        let app = TrackedApp(location: try ForgeLocation(parsing: "github.com/owner/tool"), displayName: "Tool")
+        let checked = try await service.check(app)
+        XCTAssertNil(checked.latestKnownTag)
+        XCTAssertFalse(checked.isInstallable)
+    }
+
+    func testCheckMakesAnUninstalledAppInstallableOnceAReleaseAppears() async throws {
+        let service = makeService(releases: releaseJSON(tag: "v1", assetName: "Tool.dmg"), installDirectory: try makeTemporaryDirectory())
+        let app = TrackedApp(location: try ForgeLocation(parsing: "github.com/owner/tool"), displayName: "Tool")
+        XCTAssertTrue(try await service.check(app).isInstallable)
     }
 
     func testCheckRecordsLatestTagAndTime() async throws {

@@ -10,7 +10,7 @@ struct MenuBarContent: View {
     @ObservedObject var model: AppModel
     @Environment(\.openWindow) private var openWindow
 
-    private var updatable: [TrackedApp] { model.apps.filter(\.hasUpdate) }
+    private var updatable: [TrackedApp] { model.apps.filter { $0.hasUpdate || $0.isInstallable } }
 
     var body: some View {
         Button("Open \(AppIdentity.displayName)") {
@@ -22,7 +22,7 @@ struct MenuBarContent: View {
         if !updatable.isEmpty {
             Divider()
             ForEach(updatable) { app in
-                Button("Update \(app.displayName) to \(app.latestKnownTag ?? "")") {
+                Button("\(app.isInstallable ? "Install" : "Update") \(app.displayName) \(app.latestKnownTag ?? "")") {
                     Task { await model.install(app.id) }
                 }
             }

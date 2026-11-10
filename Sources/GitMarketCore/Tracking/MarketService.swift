@@ -37,26 +37,33 @@ public struct MarketService {
         self.architecture = architecture
     }
 
-    /// What adding this repository would install. `kind` is only needed for self-hosted hosts that cannot be detected.
-    public func preview(repositoryText: String, kind: ForgeKind? = nil) async throws -> ReleasePreview {
-        var location = try ForgeLocation(parsing: repositoryText)
-        if let kind {
-            location = location.with(kind: kind)
-        } else if location.kind == nil {
-            guard let detected = await fetcher.detectKind(of: location) else {
-                throw ForgeError.unknownForge(host: location.host)
-            }
-            location = location.with(kind: detected)
+    /// Resolves the forge for a repository URL. `kind` is only needed for self-hosted hosts that cannot be detected.
+    public func locate(repositoryText: String, kind: ForgeKind? = nil) async throws -> ForgeLocation {
+        let location = try ForgeLocation(parsing: repositoryText)
+        if let kind { return location.with(kind: kind) }
+        if location.kind != nil { return location }
+        guard let detected = await fetcher.detectKind(of: location) else {
+            throw ForgeError.unknownForge(host: location.host)
         }
-        let release = try await latestRelease(of: location, includePrereleases: false)
+        return location.with(kind: detected)
+    }
+
+    /// What adding this repository would install.
+    public func preview(repositoryText: String, kind: ForgeKind? = nil, includePrereleases: Bool = false) async throws -> ReleasePreview {
+        let location = try await locate(repositoryText: repositoryText, kind: kind)
+        let release = try await latestRelease(of: location, includePrereleases: includePrereleases)
         let asset = try selectAsset(from: release, namePattern: nil)
         return ReleasePreview(location: location, release: release, asset: asset)
     }
 
     public func check(_ app: TrackedApp) async throws -> TrackedApp {
-        let release = try await latestRelease(of: app.location, includePrereleases: app.includePrereleases)
         var checked = app
-        checked.latestKnownTag = release.tag
+        do {
+            checked.latestKnownTag = try await latestRelease(of: app.location, includePrereleases: app.includePrereleases).tag
+        } catch MarketError.noReleases {
+            // A repository may be tracked before its first release exists.
+            checked.latestKnownTag = nil
+        }
         checked.lastCheckedAt = now()
         return checked
     }

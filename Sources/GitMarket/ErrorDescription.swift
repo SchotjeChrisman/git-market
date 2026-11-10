@@ -20,7 +20,7 @@ enum ErrorDescription {
         case ForgeError.malformedResponse:
             return "The server's answer was not a release list."
         case MarketError.noReleases:
-            return "This repository has no releases."
+            return "No release found. If it only has pre-releases, turn on Include pre-releases; otherwise you can track it and install once one appears."
         case MarketError.noInstallableAsset(let tag):
             return "Release \(tag) has no .dmg, .zip or .pkg for this Mac."
         case MarketError.unsupportedPackage(let fileName):

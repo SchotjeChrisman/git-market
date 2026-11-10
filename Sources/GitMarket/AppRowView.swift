@@ -32,7 +32,10 @@ struct AppRowView: View {
     }
 
     private var versionLine: String {
-        guard let installed = app.installedTag else { return "Not installed" }
+        guard let installed = app.installedTag else {
+            guard let latest = app.latestKnownTag else { return "Not installed, no release yet" }
+            return "Not installed, \(latest) available"
+        }
         if app.hasUpdate, let latest = app.latestKnownTag { return "\(installed) → \(latest)" }
         return "Installed \(installed)"
     }

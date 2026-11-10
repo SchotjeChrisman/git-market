@@ -28,6 +28,9 @@ public struct TrackedApp: Equatable, Codable, Identifiable {
         self.assetNamePattern = assetNamePattern
     }
 
+    /// Tracked but never installed, and a release is available now.
+    public var isInstallable: Bool { installedTag == nil && latestKnownTag != nil }
+
     public var hasUpdate: Bool {
         guard let installedTag, let latestKnownTag else { return false }
         return VersionComparer.isNewer(latestKnownTag, than: installedTag)
