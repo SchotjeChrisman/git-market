@@ -14,7 +14,11 @@ public struct GitLabSource: ReleaseSource {
     }
 
     private struct LinksDTO: Decodable {
-        let `self`: URL?
+        let pageURL: URL?
+
+        enum CodingKeys: String, CodingKey {
+            case pageURL = "self"
+        }
     }
 
     private struct AssetsDTO: Decodable {
@@ -54,7 +58,7 @@ public struct GitLabSource: ReleaseSource {
                 name: dto.name,
                 isPrerelease: dto.upcoming_release,
                 publishedAt: ReleaseDateParser.parse(dto.released_at),
-                pageURL: dto._links?.self,
+                pageURL: dto._links?.pageURL,
                 assets: dto.assets.links.map {
                     Asset(name: $0.name, size: nil, downloadURL: $0.direct_asset_url ?? $0.url)
                 }
